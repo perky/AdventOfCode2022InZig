@@ -1,47 +1,99 @@
 const std = @import("std");
-const Allocator = std.mem.Allocator;
-const List = std.ArrayList;
-const Map = std.AutoHashMap;
-const StrMap = std.StringHashMap;
-const BitSet = std.DynamicBitSet;
-
-const util = @import("util.zig");
-const gpa = util.gpa;
-
+const puzzleinput = @import("puzzleinput.zig");
 const data = @embedFile("data/day03.txt");
+const stdout = std.io.getStdOut().writer();
+
+const DataParseError = error {UnknownCharacter, InvalidLineLength};
+const ELF_GROUP_SIZE = 3;
+var total_score: u64 = 0;
+
+const ItemSet = struct {
+    item_flags: u64 = 0,
+
+    pub fn initWithString(input_str: []const u8) !ItemSet {
+        var item_set = ItemSet {};
+        for (input_str) |char| {
+            const priority = try priorityFromCharacter(char);
+            item_set.setFlag(priority);
+        }
+        return item_set;
+    }
+
+    pub fn initWithOnlySameItems(a: ItemSet, b: ItemSet) ItemSet {
+        var same_item_flags: u64 = a.item_flags & b.item_flags;
+        return ItemSet {.item_flags = same_item_flags};
+    }
+
+    pub fn setFlag(self: *ItemSet, item_priority: u6) void {
+        var mask: u64 = @as(u64, 1) << item_priority;
+        self.item_flags = self.item_flags | mask;
+    }
+
+    pub fn itemPriority(self: ItemSet) u6 {
+        if (self.item_flags == 0) {
+            return 0;
+        } else if (std.math.isPowerOfTwo(self.item_flags)) {
+            var mask: u64 = 1;
+            var bit_position: u6 = 0;
+            while((mask & self.item_flags) == 0) {
+                mask = mask << 1;
+                bit_position += 1;
+            }
+            return bit_position;
+        } else {
+            stdout.print("item flags not power of two...\n{b:64}\n", .{
+                self.item_flags,
+            }) catch unreachable;
+            unreachable;
+        }
+    }
+};
 
 pub fn main() !void {
-    
+    total_score = 0;
+    try puzzleinput.executeFuncPerInputLine(data, sumPriorityOfMisplacedItems);
+    try stdout.print("sum of misplaced items: {d}\n", .{total_score});
+
+    total_score = 0;
+    try puzzleinput.executeFuncPerGroupOfInputLines(ELF_GROUP_SIZE, data, sumPriorityOfGroupBadges);
+    try stdout.print("sum of group badges: {d}\n", .{total_score});
 }
 
-// Useful stdlib functions
-const tokenize = std.mem.tokenize;
-const split = std.mem.split;
-const indexOf = std.mem.indexOfScalar;
-const indexOfAny = std.mem.indexOfAny;
-const indexOfStr = std.mem.indexOfPosLinear;
-const lastIndexOf = std.mem.lastIndexOfScalar;
-const lastIndexOfAny = std.mem.lastIndexOfAny;
-const lastIndexOfStr = std.mem.lastIndexOfLinear;
-const trim = std.mem.trim;
-const sliceMin = std.mem.min;
-const sliceMax = std.mem.max;
+fn sumPriorityOfMisplacedItems(input_line: []const u8, _: usize) !void {
+    if (input_line.len % 2 != 0) {
+        try stdout.print("Item line not divisible by two.\n", .{});    
+        return DataParseError.InvalidLineLength;
+    }
+    const compartment_len = input_line.len / 2;
+    const compartment1_str = input_line[0..compartment_len];
+    const compartment2_str = input_line[compartment_len..];
+    var compartment1 = try ItemSet.initWithString(compartment1_str);
+    var compartment2 = try ItemSet.initWithString(compartment2_str);
+    const same_item = ItemSet.initWithOnlySameItems(compartment1, compartment2).itemPriority();
+    total_score += same_item;
+}
 
-const parseInt = std.fmt.parseInt;
-const parseFloat = std.fmt.parseFloat;
+fn sumPriorityOfGroupBadges(group_lines: [ELF_GROUP_SIZE][]const u8, _: usize) !void {
+    var rucksacks: [ELF_GROUP_SIZE]ItemSet = undefined;
+    for (group_lines) |line, line_i| {
+        rucksacks[line_i] = try ItemSet.initWithString(line);
+    }
+    
+    var common_badge = ItemSet.initWithOnlySameItems(rucksacks[0], rucksacks[1]);
+    common_badge = ItemSet.initWithOnlySameItems(common_badge, rucksacks[2]);
+    const common_badge_priority = common_badge.itemPriority();
+    total_score += common_badge_priority;
+}
 
-const min = std.math.min;
-const min3 = std.math.min3;
-const max = std.math.max;
-const max3 = std.math.max3;
-
-const print = std.debug.print;
-const assert = std.debug.assert;
-
-const sort = std.sort.sort;
-const asc = std.sort.asc;
-const desc = std.sort.desc;
-
-// Generated from template/template.zig.
-// Run `zig build generate` to update.
-// Only unmodified days will be updated.
+fn priorityFromCharacter(char: u8) !u6 {
+    var char_value = @intCast(i32, char);
+    if (char_value >= 'A' and char_value <= 'Z') {
+        const priority_value = 27 + (char_value - 'A');
+        return @intCast(u6, priority_value);
+    } else if (char_value >= 'a' and char_value <= 'z') {
+        const priority_value = 1 + (char_value - 'a');
+        return @intCast(u6, priority_value);
+    } else {
+        return DataParseError.UnknownCharacter;
+    }
+}
