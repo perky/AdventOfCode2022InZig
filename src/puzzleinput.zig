@@ -6,21 +6,24 @@ pub fn inputLines(data: []const u8) std.mem.SplitIterator(u8) {
 
 pub fn executeFuncPerInputLine(
     data: []const u8, 
-    func: fn ([]const u8, usize) anyerror!void) !void {
+    func: fn ([]const u8, usize) anyerror!i32) !i32 {
 
+    var sum: i32 = 0;
     var lines = inputLines(data);
     var line_i: usize = 0;
     while (lines.next()) |line| {
-        try func(line, line_i);
+        sum += try func(line, line_i);
         line_i += 1;
     }
+    return sum;
 }
 
 pub fn executeFuncPerGroupOfInputLines(
     comptime group_size: usize, 
     data: []const u8, 
-    func: fn ([group_size][]const u8, usize) anyerror!void) !void {
+    func: fn ([group_size][]const u8, usize) anyerror!i32) !i32 {
 
+    var sum: i32 = 0;
     var lines = inputLines(data);
     var group_i: usize = 0;
     var group_count: usize = 0;
@@ -29,9 +32,10 @@ pub fn executeFuncPerGroupOfInputLines(
         group_lines[group_count] = line;
         group_count += 1;
         if (group_count == group_size) {
-            try func(group_lines, group_i);
+            sum += try func(group_lines, group_i);
             group_count = 0;
             group_i += 1;
         }
     }
+    return sum;
 }

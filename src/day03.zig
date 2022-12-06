@@ -5,7 +5,6 @@ const stdout = std.io.getStdOut().writer();
 
 const DataParseError = error {UnknownCharacter, InvalidLineLength};
 const ELF_GROUP_SIZE = 3;
-var total_score: u64 = 0;
 
 const ItemSet = struct {
     item_flags: u64 = 0,
@@ -50,16 +49,14 @@ const ItemSet = struct {
 };
 
 pub fn main() !void {
-    total_score = 0;
-    try puzzleinput.executeFuncPerInputLine(data, sumPriorityOfMisplacedItems);
-    try stdout.print("sum of misplaced items: {d}\n", .{total_score});
+    var score_misplaced = try puzzleinput.executeFuncPerInputLine(data, sumPriorityOfMisplacedItems);
+    try stdout.print("sum of misplaced items: {d}\n", .{score_misplaced});
 
-    total_score = 0;
-    try puzzleinput.executeFuncPerGroupOfInputLines(ELF_GROUP_SIZE, data, sumPriorityOfGroupBadges);
-    try stdout.print("sum of group badges: {d}\n", .{total_score});
+    var score_badges = try puzzleinput.executeFuncPerGroupOfInputLines(ELF_GROUP_SIZE, data, sumPriorityOfGroupBadges);
+    try stdout.print("sum of group badges: {d}\n", .{score_badges});
 }
 
-fn sumPriorityOfMisplacedItems(input_line: []const u8, _: usize) !void {
+fn sumPriorityOfMisplacedItems(input_line: []const u8, _: usize) !i32 {
     if (input_line.len % 2 != 0) {
         try stdout.print("Item line not divisible by two.\n", .{});    
         return DataParseError.InvalidLineLength;
@@ -70,10 +67,10 @@ fn sumPriorityOfMisplacedItems(input_line: []const u8, _: usize) !void {
     var compartment1 = try ItemSet.initWithString(compartment1_str);
     var compartment2 = try ItemSet.initWithString(compartment2_str);
     const same_item = ItemSet.initWithOnlySameItems(compartment1, compartment2).itemPriority();
-    total_score += same_item;
+    return same_item;
 }
 
-fn sumPriorityOfGroupBadges(group_lines: [ELF_GROUP_SIZE][]const u8, _: usize) !void {
+fn sumPriorityOfGroupBadges(group_lines: [ELF_GROUP_SIZE][]const u8, _: usize) !i32 {
     var rucksacks: [ELF_GROUP_SIZE]ItemSet = undefined;
     for (group_lines) |line, line_i| {
         rucksacks[line_i] = try ItemSet.initWithString(line);
@@ -82,7 +79,7 @@ fn sumPriorityOfGroupBadges(group_lines: [ELF_GROUP_SIZE][]const u8, _: usize) !
     var common_badge = ItemSet.initWithOnlySameItems(rucksacks[0], rucksacks[1]);
     common_badge = ItemSet.initWithOnlySameItems(common_badge, rucksacks[2]);
     const common_badge_priority = common_badge.itemPriority();
-    total_score += common_badge_priority;
+    return common_badge_priority;
 }
 
 fn priorityFromCharacter(char: u8) !u6 {
