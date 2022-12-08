@@ -1,7 +1,7 @@
 const std = @import("std");
 
 pub fn inputLines(data: []const u8) std.mem.SplitIterator(u8) {
-    return std.mem.split(u8, data, "\n");
+    return std.mem.split(u8, data, "\r\n");
 }
 
 pub fn executeFuncPerInputLine(

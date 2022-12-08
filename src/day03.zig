@@ -1,7 +1,7 @@
 const std = @import("std");
 const puzzleinput = @import("puzzleinput.zig");
 const data = @embedFile("data/day03.txt");
-const stdout = std.io.getStdOut().writer();
+const print = std.debug.print;
 
 const DataParseError = error {UnknownCharacter, InvalidLineLength};
 const ELF_GROUP_SIZE = 3;
@@ -40,9 +40,9 @@ const ItemSet = struct {
             }
             return bit_position;
         } else {
-            stdout.print("item flags not power of two...\n{b:64}\n", .{
+            print("item flags not power of two...\n{b:64}\n", .{
                 self.item_flags,
-            }) catch unreachable;
+            });
             unreachable;
         }
     }
@@ -50,15 +50,15 @@ const ItemSet = struct {
 
 pub fn main() !void {
     var score_misplaced = try puzzleinput.executeFuncPerInputLine(data, sumPriorityOfMisplacedItems);
-    try stdout.print("sum of misplaced items: {d}\n", .{score_misplaced});
+    print("sum of misplaced items: {d}\n", .{score_misplaced});
 
     var score_badges = try puzzleinput.executeFuncPerGroupOfInputLines(ELF_GROUP_SIZE, data, sumPriorityOfGroupBadges);
-    try stdout.print("sum of group badges: {d}\n", .{score_badges});
+    print("sum of group badges: {d}\n", .{score_badges});
 }
 
 fn sumPriorityOfMisplacedItems(input_line: []const u8, _: usize) !i32 {
     if (input_line.len % 2 != 0) {
-        try stdout.print("Item line not divisible by two.\n", .{});    
+        print("Item line not divisible by two.\n", .{});    
         return DataParseError.InvalidLineLength;
     }
     const compartment_len = input_line.len / 2;

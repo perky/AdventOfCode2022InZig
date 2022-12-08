@@ -12,7 +12,7 @@ pub fn main() !void {
     defer inventory_counts.deinit();
     try inventory_counts.append(0);
     var inventory_i : usize = 0;
-    var line_iterator = std.mem.split(u8, data, "\n");
+    var line_iterator = std.mem.split(u8, data, "\r\n");
     while (line_iterator.next()) |line| {
         if (line.len == 0) {
             try inventory_counts.append(0);
@@ -63,6 +63,3 @@ fn largestNValuesInArray(comptime T: type, comptime N: u32, values: []T) [N]T {
     return result;
 }
 
-// Generated from template/template.zig.
-// Run `zig build generate` to update.
-// Only unmodified days will be updated.
