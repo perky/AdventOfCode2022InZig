@@ -38,20 +38,6 @@ fn readDirectoryName(stream: *DataStream) []const u8 {
     return stream.*.data[start..end];
 }
 
-fn allocByteSlice(allocator: Allocator, bytes: []const u8) ![]const u8 {
-    var alloc_bytes = try allocator.alloc(u8, bytes.len);
-    std.mem.copy(u8, alloc_bytes, bytes);
-    return alloc_bytes;
-}
-
-fn lastItem(comptime T: type, list: *const List(T)) T {
-    return list.items[list.items.len - 1];
-}
-
-fn lastItemPtr(comptime T: type, list: *const List(T)) *T {
-    return &list.items[list.items.len - 1];
-}
-
 const TermMode = enum { none, await_command, list };
 
 pub fn main() !void {
@@ -89,11 +75,10 @@ pub fn main() !void {
                 // directory from the stack, or allocate a new one and
                 // and it to the stack.
                 // Note: this assumes a directory is only visited once.
-                const dir_name_slice = readDirectoryName(&stream);
-                if (isUpDir(dir_name_slice)) {
+                const dir_name = readDirectoryName(&stream);
+                if (isUpDir(dir_name)) {
                     _ = current_dir_stack.pop();
                 } else {
-                    const dir_name = try allocByteSlice(gpa, dir_name_slice);
                     try all_dirs.append(.{.name = dir_name, .size = 0});
                     try current_dir_stack.append(all_dirs.items.len - 1);
                 }
