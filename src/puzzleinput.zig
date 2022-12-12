@@ -1,4 +1,5 @@
 const std = @import("std");
+const DataSteam = @import("DataSteam.zig");
 
 pub fn inputLines(data: []const u8) std.mem.SplitIterator(u8) {
     return std.mem.split(u8, data, "\r\n");

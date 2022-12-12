@@ -7,6 +7,7 @@ const util = @import("util.zig");
 const gpa = util.gpa;
 const print = std.debug.print;
 const data = @embedFile("data/day08.txt");
+const Direction = @import("vector.zig").Direction;
 
 const GridList = struct {
     list: List(i32),
@@ -53,7 +54,7 @@ const GridList = struct {
     }
 };
 
-const Direction = enum {left, right, up, down};
+
 
 fn markVisibleFromDirection(grid: *GridList, visible: []bool, direction: Direction) void {
     var i: usize = 0;
